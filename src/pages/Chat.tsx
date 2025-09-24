@@ -1,16 +1,44 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import ChatWindow from "@/components/ChatWindow";
+import CallInterface from "@/components/CallInterface";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/hooks/useAuth";
+import { useUserPresence } from "@/hooks/useUserPresence";
 
 const Chat = () => {
-  const [selectedConversation, setSelectedConversation] = useState<number>();
+  const [selectedConversation, setSelectedConversation] = useState<string>();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
+  
+  // Initialiser la présence utilisateur
+  useUserPresence();
 
-  const handleSelectConversation = (conversationId: number) => {
+  // Rediriger si non authentifié
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth');
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  const handleSelectConversation = (conversationId: string) => {
     setSelectedConversation(conversationId);
     if (isMobile) {
       setSidebarOpen(false);
@@ -77,6 +105,9 @@ const Chat = () => {
         {/* Chat Window */}
         <ChatWindow conversationId={selectedConversation} />
       </div>
+
+      {/* Interface d'appel */}
+      <CallInterface />
     </div>
   );
 };
